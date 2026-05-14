@@ -44,12 +44,11 @@ def load_model():
         return
 
     cache_dir = VOLUME_CACHE if os.path.isdir("/runpod-volume") else None
-    source = "volume cache" if cache_dir and os.listdir(cache_dir or "/nonexistent") else "HuggingFace"
-    print(f"Loading {MODEL_ID} from {source} on {DEVICE}...")
-    start = time.time()
-
     if cache_dir:
         os.makedirs(cache_dir, exist_ok=True)
+    source = "volume cache" if cache_dir and os.listdir(cache_dir) else "HuggingFace"
+    print(f"Loading {MODEL_ID} from {source} on {DEVICE}...")
+    start = time.time()
 
     pipe = LTXImageToVideoPipeline.from_pretrained(
         MODEL_ID,
