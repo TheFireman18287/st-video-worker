@@ -8,12 +8,27 @@ import io
 import base64
 import time
 import tempfile
+import subprocess
 
 import runpod
 import torch
 from PIL import Image
-from diffusers import LTXImageToVideoPipeline
-from diffusers.utils import export_to_video
+
+print(f"Python startup OK. torch={torch.__version__}, cuda={torch.cuda.is_available()}")
+
+try:
+    from diffusers import LTXImageToVideoPipeline
+    print("diffusers LTXImageToVideoPipeline import OK")
+except ImportError as e:
+    print(f"IMPORT ERROR: {e}")
+    LTXImageToVideoPipeline = None
+
+try:
+    from diffusers.utils import export_to_video
+    print("diffusers export_to_video import OK")
+except ImportError:
+    export_to_video = None
+    print("export_to_video not available, will use imageio directly")
 
 MODEL_ID = os.environ.get("MODEL_ID", "Lightricks/LTX-Video-0.9.1")
 VOLUME_CACHE = "/runpod-volume/models"
@@ -98,7 +113,19 @@ def handler(job):
     with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as f:
         tmp_path = f.name
 
-    export_to_video(frames, tmp_path, fps=fps)
+    if export_to_video:
+        export_to_video(frames, tmp_path, fps=fps)
+    else:
+        import imageio
+        writer = imageio.get_writer(tmp_path, fps=fps, codec="libx264", quality=8)
+        for frame in frames:
+            import numpy as np
+            if hasattr(frame, 'numpy'):
+                frame = frame.numpy()
+            if isinstance(frame, np.ndarray) and frame.dtype != np.uint8:
+                frame = (frame * 255).clip(0, 255).astype(np.uint8)
+            writer.append_data(frame)
+        writer.close()
 
     with open(tmp_path, "rb") as f:
         video_bytes = f.read()
