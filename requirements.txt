@@ -1,0 +1,10 @@
+runpod>=1.7.0
+torch>=2.1.0
+diffusers>=0.32.0
+transformers>=4.40.0
+accelerate>=0.30.0
+safetensors>=0.4.0
+Pillow>=10.0.0
+sentencepiece>=0.2.0
+imageio[ffmpeg]>=2.34.0
+imageio-ffmpeg>=0.5.1
